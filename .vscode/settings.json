@@ -1,11 +1,9 @@
 {
   "C_Cpp.intelliSenseEngine": "default",
   "idf.extensionActivationMode": "always",
-  "idf.openOcdConfigs": [
-    "board/esp32-wrover-kit-3.3v.cfg"
-  ],
+  "idf.openOcdConfigs": ["board/esp32-wrover-kit-3.3v.cfg"],
   "idf.portWin": "COM5",
-  "idf.currentSetup": "C:\\Users\\TTC\\esp\\v5.3.4\\esp-idf",
+  "idf.currentSetup": "D:/esp/Espressif/frameworks/esp-idf-v5.4.3/",
   "idf.customExtraVars": {
     "IDF_TARGET": "esp32"
   },

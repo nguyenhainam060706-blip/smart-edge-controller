@@ -106,8 +106,8 @@ esp_err_t sensor_read_data(sensor_data_t *out_data)
      */
 
     if (
-        out_data->temperature < -40.0f ||
-        out_data->temperature > 80.0f
+        out_data->temperature < 0.0f ||
+        out_data->temperature > 50.0f
     )
     {
         ESP_LOGW(

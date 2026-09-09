@@ -93,7 +93,7 @@ esp_err_t dht11_init(gpio_num_t data_gpio)
 }
 
 /* ============================================================
- * READ 40 BITS FROM SENSOR (REAL HARDWARE)
+ * READ 40 BITS FROM SENSOR
  * ============================================================ */
 
 static esp_err_t dht11_read_raw(uint8_t data[5])

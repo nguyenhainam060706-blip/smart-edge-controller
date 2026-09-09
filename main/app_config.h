@@ -4,8 +4,8 @@
 #include "esp_err.h"
 
 // --- CẤU HÌNH WI-FI ---
-#define CONFIG_WIFI_SSID "TP-Link_677C"
-#define CONFIG_WIFI_PASS " 77373076"
+#define CONFIG_WIFI_SSID "HNamNg"
+#define CONFIG_WIFI_PASS "hainam06"
 
 // --- CẤU HÌNH MQTT BROKER ---
 #define CONFIG_MQTT_BROKER_URI "mqtt://broker.hivemq.com:1883"

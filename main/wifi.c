@@ -1,12 +1,18 @@
-#include "wifi.h"      // Include header của chính nó
-#include "nvs_flash.h" // Cho nvs_flash_init
-#include "esp_netif.h" // Cho esp_netif_init
-#include "esp_event.h" // Cho esp_event_loop_create_default
-#include "esp_wifi.h"  // Cho các hàm esp_wifi_*
+#include "wifi.h"
+#include "nvs_flash.h"
+#include "esp_netif.h"
+#include "esp_event.h"
+#include "esp_wifi.h"
 #include "esp_log.h"
 #include <string.h>
 
+#include "freertos/FreeRTOS.h"
+#include "freertos/event_groups.h"
+
 static const char *TAG = "WIFI_APP";
+
+static EventGroupHandle_t s_wifi_event_group;
+#define WIFI_CONNECTED_BIT BIT0
 
 /* ============================================================
  * WIFI EVENT HANDLER
@@ -17,22 +23,26 @@ static void wifi_event_handler(
     int32_t event_id,
     void *event_data)
 {
-    // Khi Wi-Fi driver đã khởi động xong -> Ra lệnh kết nối
     if (event_base == WIFI_EVENT && event_id == WIFI_EVENT_STA_START)
     {
         esp_wifi_connect();
     }
-    // Khi Wi-Fi bị ngắt kết nối (mất mạng, sai pass, cục wifi reset) -> Tự động kết nối lại
     else if (event_base == WIFI_EVENT && event_id == WIFI_EVENT_STA_DISCONNECTED)
     {
         ESP_LOGW(TAG, "Disconnected from Wi-Fi, trying to reconnect...");
+
+        // Xóa cờ kết nối để đồng bộ trạng thái hệ thống
+        xEventGroupClearBits(s_wifi_event_group, WIFI_CONNECTED_BIT);
+
         esp_wifi_connect();
     }
-    // Khi kết nối thành công và được cấp IP
     else if (event_base == IP_EVENT && event_id == IP_EVENT_STA_GOT_IP)
     {
         ip_event_got_ip_t *event = (ip_event_got_ip_t *)event_data;
         ESP_LOGI(TAG, "Got IP Address: " IPSTR, IP2STR(&event->ip_info.ip));
+
+        // Set cờ báo hiệu đã kết nối thành công và có IP
+        xEventGroupSetBits(s_wifi_event_group, WIFI_CONNECTED_BIT);
     }
 }
 
@@ -43,7 +53,8 @@ void app_wifi_init(const char *ssid, const char *password)
 {
     ESP_LOGI(TAG, "Starting Wi-Fi Initialization...");
 
-    // 1. Khởi tạo NVS Flash (Nơi lưu các thông số hiệu chuẩn của WiFi)
+    s_wifi_event_group = xEventGroupCreate();
+
     esp_err_t ret = nvs_flash_init();
     if (ret == ESP_ERR_NVS_NO_FREE_PAGES || ret == ESP_ERR_NVS_NEW_VERSION_FOUND)
     {
@@ -52,31 +63,42 @@ void app_wifi_init(const char *ssid, const char *password)
     }
     ESP_ERROR_CHECK(ret);
 
-    // 2. Khởi tạo TCP/IP Stack và Event Loop
     ESP_ERROR_CHECK(esp_netif_init());
     ESP_ERROR_CHECK(esp_event_loop_create_default());
     esp_netif_create_default_wifi_sta();
 
-    // 3. Khởi tạo Wi-Fi Driver
     wifi_init_config_t cfg = WIFI_INIT_CONFIG_DEFAULT();
     ESP_ERROR_CHECK(esp_wifi_init(&cfg));
 
-    // -> BỔ SUNG: Đăng ký Event Handler cho sự kiện WIFI và IP
     esp_event_handler_instance_t instance_any_id;
     esp_event_handler_instance_t instance_got_ip;
     ESP_ERROR_CHECK(esp_event_handler_instance_register(WIFI_EVENT, ESP_EVENT_ANY_ID, &wifi_event_handler, NULL, &instance_any_id));
     ESP_ERROR_CHECK(esp_event_handler_instance_register(IP_EVENT, IP_EVENT_STA_GOT_IP, &wifi_event_handler, NULL, &instance_got_ip));
 
-    // 4. Cấu hình SSID và Password
-    wifi_config_t wifi_config = {0};
+    wifi_config_t wifi_config = {
+        .sta = {
+            .threshold.authmode = WIFI_AUTH_WPA2_PSK,
+            .pmf_cfg = {
+                .capable = true,
+                .required = false},
+        },
+    };
+
     strncpy((char *)wifi_config.sta.ssid, ssid, sizeof(wifi_config.sta.ssid) - 1);
     strncpy((char *)wifi_config.sta.password, password, sizeof(wifi_config.sta.password) - 1);
 
     ESP_ERROR_CHECK(esp_wifi_set_mode(WIFI_MODE_STA));
     ESP_ERROR_CHECK(esp_wifi_set_config(WIFI_IF_STA, &wifi_config));
-
-    // 5. Bắt đầu Wi-Fi (Event handler sẽ tự động gọi esp_wifi_connect khi Wi-Fi start xong)
     ESP_ERROR_CHECK(esp_wifi_start());
 
-    ESP_LOGI(TAG, "Wi-Fi initialization finished. Waiting for connection...");
+    ESP_LOGI(TAG, "Wi-Fi started. Waiting for IP address...");
+
+    // Treo hàm này ở đây cho đến khi lấy được IP từ iPhone
+    xEventGroupWaitBits(s_wifi_event_group,
+                        WIFI_CONNECTED_BIT,
+                        pdFALSE,
+                        pdFALSE,
+                        portMAX_DELAY);
+
+    ESP_LOGI(TAG, "Wi-Fi is fully connected and ready!");
 }

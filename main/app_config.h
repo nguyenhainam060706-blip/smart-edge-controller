@@ -4,8 +4,8 @@
 #include "esp_err.h"
 
 // --- CẤU HÌNH WI-FI ---
-#define CONFIG_WIFI_SSID "HNamNg"
-#define CONFIG_WIFI_PASS "hainam06"
+#define CONFIG_WIFI_SSID " "//nhập tên WIFI
+#define CONFIG_WIFI_PASS " "//nhập mật khẩu
 
 // --- CẤU HÌNH MQTT BROKER ---
 #define CONFIG_MQTT_BROKER_URI "mqtt://broker.hivemq.com:1883"

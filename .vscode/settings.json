@@ -3,7 +3,7 @@
   "idf.extensionActivationMode": "always",
   "idf.openOcdConfigs": ["board/esp32-wrover-kit-3.3v.cfg"],
   "idf.portWin": "COM4",
-  "idf.currentSetup": "D:/esp/Espressif/frameworks/esp-idf-v5.4.3/",
+  "idf.currentSetup": "C:\\esp\\v6.1\\esp-idf",
   "idf.customExtraVars": {
     "IDF_TARGET": "esp32"
   },
@@ -14,5 +14,6 @@
     "--compile-commands-dir=c:\\Users\\Admin\\smart-edge-controller\\build"
   ],
   "idf.flashType": "JTAG",
-  "idf.monitorPort": "COM1"
+  "idf.monitorPort": "COM3",
+  "idf.port": "COM3"
 }
